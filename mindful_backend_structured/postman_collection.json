@@ -1,0 +1,199 @@
+{
+  "info": {
+    "name": "Mindful Backend (Structured)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8000"
+    },
+    {
+      "key": "token",
+      "value": "PASTE_SUPABASE_ACCESS_TOKEN"
+    },
+    {
+      "key": "childId",
+      "value": "PASTE_CHILD_ID"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/healthz"
+      }
+    },
+    {
+      "name": "Create Link Code",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": "{{baseUrl}}/api/parent/link-code/create"
+      }
+    },
+    {
+      "name": "Consume Link Code",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"code\": \"ABC123\",\n  \"display_name\": \"Ava\"\n}"
+        },
+        "url": "{{baseUrl}}/api/child/link-code/consume"
+      }
+    },
+    {
+      "name": "Chat v1",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"child_id\": \"{{childId}}\",\n  \"turns\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"hi there\"\n    }\n  ]\n}"
+        },
+        "url": "{{baseUrl}}/api/chat"
+      }
+    },
+    {
+      "name": "Mood",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"child_id\": \"{{childId}}\",\n  \"mood\": \"happy\"\n}"
+        },
+        "url": "{{baseUrl}}/api/ingest/mood"
+      }
+    },
+    {
+      "name": "Journal",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"child_id\": \"{{childId}}\",\n  \"text\": \"today I felt okay\"\n}"
+        },
+        "url": "{{baseUrl}}/api/ingest/journal"
+      }
+    },
+    {
+      "name": "Game",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"child_id\": \"{{childId}}\",\n  \"activity\": \"Breathing Buddy: completed\",\n  \"delta\": 5\n}"
+        },
+        "url": "{{baseUrl}}/api/ingest/game"
+      }
+    },
+    {
+      "name": "Parent Children",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": "{{baseUrl}}/api/parent/children"
+      }
+    },
+    {
+      "name": "Parent Overview",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": "{{baseUrl}}/api/parent/overview?days=7"
+      }
+    },
+    {
+      "name": "Child Timeline",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": "{{baseUrl}}/api/parent/child/{{childId}}/timeline?days=7"
+      }
+    },
+    {
+      "name": "Admin Recompute",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": "{{baseUrl}}/api/admin/recompute"
+      }
+    }
+  ]
+}
