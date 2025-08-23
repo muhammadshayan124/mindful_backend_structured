@@ -16,24 +16,22 @@ app = FastAPI(title="Mindful Backend", version="1.0.0")
 # Read allowed origins from env FRONTEND_ORIGINS as a comma-separated list.
 # Example:
 # FRONTEND_ORIGINS=http://localhost:5173,http://127.0.0.1:5173,http://172.16.2.44:8080,https://your.lovable.dev
-origins = [o.strip() for o in settings.FRONTEND_ORIGINS.split(",") if o.strip()]
+origins = [o.strip() for o in settings.ALLOW_ORIGINS.split(",") if o.strip()]
 
 if origins:
-    # Production-friendly: explicit list
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=origins,      # exact origins
-        allow_credentials=True,     # we send Authorization bearer tokens
-        allow_methods=["*"],        # includes OPTIONS for preflight
-        allow_headers=["*"],        # includes Authorization, Content-Type, etc.
-        expose_headers=["X-Request-Id"],  # optional, handy for tracing
+        allow_origins=origins,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+        expose_headers=["X-Request-Id"],
     )
 else:
-    # Debug fallback: allow any origin by echoing it back (NOT "*" + credentials)
-    # Use only if you haven't set FRONTEND_ORIGINS yet.
+    # fallback for local dev if ALLOW_ORIGINS not set
     app.add_middleware(
         CORSMiddleware,
-        allow_origin_regex=".*",    # echoes the Origin if it matches
+        allow_origin_regex=".*",
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
@@ -58,3 +56,4 @@ app.include_router(ingest.router, prefix="")
 app.include_router(parent.router, prefix="")
 app.include_router(linking.router, prefix="")
 app.include_router(admin.router, prefix="")
+
