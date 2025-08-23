@@ -18,17 +18,15 @@ app = FastAPI(title="Mindful Backend", version="1.0.0")
 # Railway: set ALLOW_ORIGINS to a comma-separated list of exact origins, e.g.
 # ALLOW_ORIGINS=http://localhost:5173,http://127.0.0.1:5173,http://172.16.2.44:8080,https://<your-lovable>.lovable.dev
 origins = [o.strip() for o in settings.ALLOW_ORIGINS.split(",") if o.strip()]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,      # exact origins
+    allow_credentials=True,     # we send Authorization
+    allow_methods=["*"],        # includes OPTIONS
+    allow_headers=["*"],        # includes Authorization, Content-Type
+    expose_headers=["X-Request-Id"],
+)
 
-if origins:
-    # Production-friendly: explicit allowlist (required when allow_credentials=True)
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=origins,      # exact origins (scheme + host + port)
-        allow_credentials=True,     # we send Authorization: Bearer <token>
-        allow_methods=["*"],        # includes OPTIONS for preflight
-        allow_headers=["*"],        # includes Authorization, Content-Type, etc.
-        expose_headers=["X-Request-Id"],  # helpful for tracing
-    )
 else:
     # TEMP fallback for dev if ALLOW_ORIGINS not set — echo any origin via regex
     # (works with credentials; do NOT use this in production)
@@ -59,3 +57,4 @@ app.include_router(ingest.router, prefix="")
 app.include_router(parent.router, prefix="")
 app.include_router(linking.router, prefix="")
 app.include_router(admin.router, prefix="")
+
