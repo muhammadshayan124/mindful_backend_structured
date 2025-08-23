@@ -1,4 +1,3 @@
-# app/main.py
 import uuid
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -8,28 +7,27 @@ from app.core.config import settings
 from app.core.logging import setup_logging
 from app.routes import health, chat, ingest, parent, linking, admin
 
-# ---------- Logging ----------
 setup_logging(settings.LOG_LEVEL)
 
-# ---------- App ----------
 app = FastAPI(title="Mindful Backend", version="1.0.0")
 
 # ---------- CORS ----------
-# Railway: set ALLOW_ORIGINS to a comma-separated list of exact origins, e.g.
-# ALLOW_ORIGINS=http://localhost:5173,http://127.0.0.1:5173,http://172.16.2.44:8080,https://<your-lovable>.lovable.dev
+# Read allowed origins from env ALLOW_ORIGINS (comma-separated).
+# Example:
+# ALLOW_ORIGINS=http://localhost:5173,http://127.0.0.1:5173,https://preview--mindful-bridges-together.lovable.app,https://mindful-bridges-together.lovable.app
 origins = [o.strip() for o in settings.ALLOW_ORIGINS.split(",") if o.strip()]
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,      # exact origins
-    allow_credentials=True,     # we send Authorization
-    allow_methods=["*"],        # includes OPTIONS
-    allow_headers=["*"],        # includes Authorization, Content-Type
-    expose_headers=["X-Request-Id"],
-)
 
+if origins:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=origins,      # exact origins only (not "*")
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+        expose_headers=["X-Request-Id"],
+    )
 else:
-    # TEMP fallback for dev if ALLOW_ORIGINS not set — echo any origin via regex
-    # (works with credentials; do NOT use this in production)
+    # Dev fallback ONLY. (OK on first boot; prefer setting ALLOW_ORIGINS.)
     app.add_middleware(
         CORSMiddleware,
         allow_origin_regex=".*",
@@ -51,10 +49,9 @@ class RequestIdMiddleware(BaseHTTPMiddleware):
 app.add_middleware(RequestIdMiddleware)
 
 # ---------- Routers ----------
-app.include_router(health.router, prefix="")
-app.include_router(chat.router, prefix="")
-app.include_router(ingest.router, prefix="")
-app.include_router(parent.router, prefix="")
+app.include_router(health.router,  prefix="")
+app.include_router(chat.router,    prefix="")
+app.include_router(ingest.router,  prefix="")
+app.include_router(parent.router,  prefix="")
 app.include_router(linking.router, prefix="")
-app.include_router(admin.router, prefix="")
-
+app.include_router(admin.router,   prefix="")
