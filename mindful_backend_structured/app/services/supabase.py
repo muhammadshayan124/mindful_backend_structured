@@ -49,6 +49,6 @@ async def sb_patch(table: str, match: Dict[str, str], patch: Dict[str, Any]):
         if r.status_code not in (200, 204):
             raise RuntimeError(f"DB PATCH {table}: {r.status_code} {r.text}")
 
-# Aliases for compatibility with identity.py and other modules
+# Aliases for clarity with your identity.py
 sb_insert = sb_post
 sb_update = sb_patch
