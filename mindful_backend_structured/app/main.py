@@ -15,13 +15,13 @@ app = FastAPI(title="Mindful Backend", version="1.0.0")
 # Read allowed origins from env ALLOW_ORIGINS (comma-separated).
 # Example:
 # ALLOW_ORIGINS=http://localhost:5173,http://127.0.0.1:5173,https://preview--mindful-bridges-together.lovable.app,https://mindful-bridges-together.lovable.app
-origins = [o.strip() for o in settings.ALLOW_ORIGINS.split(",") if o.strip()]
+#origins = [o.strip() for o in settings.ALLOW_ORIGINS.split(",") if o.strip()]
 
 if origins:
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=origins,      # exact origins only (not "*")
-        allow_credentials=True,
+        allow_origins=["*"],      # exact origins only (not "*")
+        allow_credentials=False,
         allow_methods=["*"],
         allow_headers=["*"],
         expose_headers=["X-Request-Id"],
@@ -55,3 +55,4 @@ app.include_router(ingest.router,  prefix="")
 app.include_router(parent.router,  prefix="")
 app.include_router(linking.router, prefix="")
 app.include_router(admin.router,   prefix="")
+
