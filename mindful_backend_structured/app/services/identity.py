@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime
-from app.deps.supabase import supabase
+from app.services.supabase import sb_insert, sb_update
 
 # Ensure the user is a parent
 async def ensure_parent(user_id: str) -> str:
@@ -67,4 +67,5 @@ async def consume_link_code(code: str, child_id: str):
     })
 
     return {"parent_id": parent_id}
+
 
