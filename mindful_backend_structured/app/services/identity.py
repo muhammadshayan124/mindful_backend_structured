@@ -1,70 +1,69 @@
+import uuid
 import datetime
-import secrets
-from typing import Dict, Any, List
-from app.services.supabase import sb_get, sb_post, sb_patch
+from app.deps.supabase import supabase
 
-def iso(dt: datetime.datetime) -> str:
-    return dt.replace(microsecond=0).isoformat() + "Z"
-
+# Ensure the user is a parent
 async def ensure_parent(user_id: str) -> str:
-    rows = await sb_get("parents", {"select": "id", "user_id": "eq." + user_id})
-    if rows:
-        return rows[0]["id"]
-    await sb_post("parents", [{"user_id": user_id}])
-    rows = await sb_get("parents", {"select": "id", "user_id": "eq." + user_id})
-    return rows[0]["id"]
+    # In your case, a parent is just a supabase user id
+    # You could enforce "role = parent" if you store it elsewhere
+    return user_id
 
+# Ensure the user is a child
 async def ensure_child(user_id: str, display_name: str) -> str:
-    rows = await sb_get("children", {"select": "id", "user_id": "eq." + user_id})
-    if rows:
-        return rows[0]["id"]
-    await sb_post("children", [{"user_id": user_id, "display_name": display_name}])
-    rows = await sb_get("children", {"select": "id", "user_id": "eq." + user_id})
-    return rows[0]["id"]
+    # Similar, but ensure a "child" row exists
+    # For now, just return uid. If you store children separately, insert/find here
+    return user_id
 
-async def create_link_code(parent_id: str, ttl_minutes: int = 1440) -> Dict[str, str]:
-    alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
-    code = "".join(secrets.choice(alphabet) for _ in range(6))
-    expires_at = datetime.datetime.utcnow() + datetime.timedelta(minutes=ttl_minutes)
-    await sb_post("link_codes", [{
+# Create a new link code for a parent
+async def create_link_code(parent_id: str, ttl_minutes: int = 1440) -> dict:
+    code = str(uuid.uuid4())[:8]  # short random code
+    now = datetime.datetime.utcnow()
+    expires_at = now + datetime.timedelta(minutes=ttl_minutes)
+
+    # Insert into LinkCodes
+    result = supabase.table("LinkCodes").insert({
         "code": code,
         "parent_id": parent_id,
-        "expires_at": iso(expires_at),
+        "created_at": now.isoformat(),
+        "expired_at": expires_at.isoformat(),
         "consumed": False
-    }])
-    return {"code": code, "expires_at": iso(expires_at)}
+    }).execute()
 
-async def consume_link_code(code: str, child_id: str) -> Dict[str, Any]:
-    link = await sb_get("link_codes", {
-        "select": "code,parent_id,expires_at,consumed",
-        "code": "eq." + code
-    })
-    if not link:
-        raise ValueError("Invalid code")
+    return {
+        "code": code,
+        "parent_id": parent_id,
+        "expired_at": expires_at.isoformat()
+    }
 
-    lk = link[0]
+# Consume a link code for a child
+async def consume_link_code(code: str, child_id: str) -> dict:
     now = datetime.datetime.utcnow()
 
-    if lk["consumed"]:
+    # Look up code in LinkCodes
+    result = supabase.table("LinkCodes").select("*").eq("code", code).execute()
+    if not result.data or len(result.data) == 0:
+        raise ValueError("Invalid code")
+
+    code_row = result.data[0]
+
+    if code_row.get("consumed"):
         raise ValueError("Code already used")
 
-    if datetime.datetime.fromisoformat(lk["expires_at"].replace("Z", "")) < now:
+    if code_row.get("expired_at") and now > datetime.datetime.fromisoformat(code_row["expired_at"]):
         raise ValueError("Code expired")
 
-    # Mark code as consumed
-    await sb_patch("link_codes", {"code": "eq." + code}, {"consumed": True})
+    parent_id = code_row["parent_id"]
 
-    # Create family link (relationship between parent and child)
-    await sb_post("family_links", [{
-        "parent_id": lk["parent_id"],
+    # Insert into FamilyLinks
+    link_result = supabase.table("FamilyLinks").insert({
+        "parent_id": parent_id,
         "child_id": child_id,
-        "created_at": iso(now)
-    }])
+        "created_at": now.isoformat(),
+        "code": code,
+        "expired_at": code_row["expired_at"]
+    }).execute()
 
-    return {"parent_id": lk["parent_id"]}
+    # Mark the code as consumed
+    supabase.table("LinkCodes").update({"consumed": True}).eq("code", code).execute()
 
-async def list_children_for_parent(parent_id: str) -> List[Dict[str, Any]]:
-    return await sb_get(
-        "children",
-        {"select": "id,display_name", "parent_id": "eq." + parent_id}
-    )
+    return {"parent_id": parent_id, "child_id": child_id}
