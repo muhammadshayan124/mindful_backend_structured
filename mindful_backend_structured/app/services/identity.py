@@ -1,5 +1,5 @@
 import uuid
-import datetime
+from datetime import datetime
 from app.deps.supabase import supabase
 
 # Ensure the user is a parent
@@ -36,34 +36,35 @@ async def create_link_code(parent_id: str, ttl_minutes: int = 1440) -> dict:
     }
 
 # Consume a link code for a child
-async def consume_link_code(code: str, child_id: str) -> dict:
-    now = datetime.datetime.utcnow()
-
-    # Look up code in LinkCodes
-    result = supabase.table("LinkCodes").select("*").eq("code", code).execute()
-    if not result.data or len(result.data) == 0:
+async def consume_link_code(code: str, child_id: str):
+    # 1. Lookup code
+    records = await sb_get(
+        "link_codes",
+        {"select": "code,parent_id,expires_at,consumed", "code": f"eq.{code}"}
+    )
+    if not records:
         raise ValueError("Invalid code")
 
-    code_row = result.data[0]
-
-    if code_row.get("consumed"):
+    rec = records[0]
+    if rec["consumed"]:
         raise ValueError("Code already used")
-
-    if code_row.get("expired_at") and now > datetime.datetime.fromisoformat(code_row["expired_at"]):
+    if datetime.fromisoformat(rec["expires_at"]) < datetime.utcnow():
         raise ValueError("Code expired")
 
-    parent_id = code_row["parent_id"]
+    parent_id = rec["parent_id"]
 
-    # Insert into FamilyLinks
-    link_result = supabase.table("FamilyLinks").insert({
+    # 2. Mark as consumed
+    await sb_update("link_codes", {"consumed": True}, {"code": f"eq.{code}"})
+
+    # 3. Insert into family_links
+    await sb_insert("family_links", {
+        "id": str(uuid.uuid4()),
         "parent_id": parent_id,
         "child_id": child_id,
-        "created_at": now.isoformat(),
         "code": code,
-        "expired_at": code_row["expired_at"]
-    }).execute()
+        "expires_at": rec["expires_at"],
+        "created_at": datetime.utcnow().isoformat(),
+    })
 
-    # Mark the code as consumed
-    supabase.table("LinkCodes").update({"consumed": True}).eq("code", code).execute()
+    return {"parent_id": parent_id}
 
-    return {"parent_id": parent_id, "child_id": child_id}
