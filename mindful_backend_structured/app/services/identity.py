@@ -1,6 +1,22 @@
 import uuid
 from datetime import datetime
 from app.services.supabase import sb_insert, sb_update
+from app.services.supabase import sb_get
+from typing import List, Dict
+
+async def list_children_for_parent(parent_id: str) -> List[Dict]:
+    """
+    Returns a list of children for a given parent.
+    Each child is a dict containing at least 'id' and 'display_name'.
+    """
+    children = await sb_get(
+        "children",
+        {
+            "select": "id,display_name",
+            "parent_id": f"eq.{parent_id}"
+        }
+    )
+    return children
 
 # Ensure the user is a parent
 async def ensure_parent(user_id: str) -> str:
@@ -67,5 +83,6 @@ async def consume_link_code(code: str, child_id: str):
     })
 
     return {"parent_id": parent_id}
+
 
 
