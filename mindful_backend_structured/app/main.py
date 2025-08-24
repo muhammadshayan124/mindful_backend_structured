@@ -18,14 +18,14 @@ app = FastAPI(title="Mindful Backend", version="1.0.0")
 #origins = [o.strip() for o in settings.ALLOW_ORIGINS.split(",") if o.strip()]
 
 #if origins:
-    app.add_middleware(
+app.add_middleware(
         CORSMiddleware,
         allow_origins=["*"],      # exact origins only (not "*")
         allow_credentials=False,
         allow_methods=["*"],
         allow_headers=["*"],
         expose_headers=["X-Request-Id"],
-    )
+     )
 #else:
     # Dev fallback ONLY. (OK on first boot; prefer setting ALLOW_ORIGINS.)
  #   app.add_middleware(
@@ -55,5 +55,6 @@ app.include_router(ingest.router,  prefix="")
 app.include_router(parent.router,  prefix="")
 app.include_router(linking.router, prefix="")
 app.include_router(admin.router,   prefix="")
+
 
 
