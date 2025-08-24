@@ -1,7 +1,7 @@
-import uuid
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
+import uuid
 
 from app.core.config import settings
 from app.core.logging import setup_logging
@@ -12,30 +12,14 @@ setup_logging(settings.LOG_LEVEL)
 app = FastAPI(title="Mindful Backend", version="1.0.0")
 
 # ---------- CORS ----------
-# Read allowed origins from env ALLOW_ORIGINS (comma-separated).
-# Example:
-# ALLOW_ORIGINS=http://localhost:5173,http://127.0.0.1:5173,https://preview--mindful-bridges-together.lovable.app,https://mindful-bridges-together.lovable.app
-#origins = [o.strip() for o in settings.ALLOW_ORIGINS.split(",") if o.strip()]
-
-#if origins:
 app.add_middleware(
-        CORSMiddleware,
-        allow_origins=["*"],      # exact origins only (not "*")
-        allow_credentials=False,
-        allow_methods=["*"],
-        allow_headers=["*"],
-        expose_headers=["X-Request-Id"],
-     )
-#else:
-    # Dev fallback ONLY. (OK on first boot; prefer setting ALLOW_ORIGINS.)
- #   app.add_middleware(
-  #      CORSMiddleware,
-   #     allow_origin_regex=".*",
-    #    allow_credentials=True,
-     #   allow_methods=["*"],
-      #  allow_headers=["*"],
-       # expose_headers=["X-Request-Id"],
-    )
+    CORSMiddleware,
+    allow_origins=["*"],      # allow all origins
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+    expose_headers=["X-Request-Id"],
+)
 
 # ---------- Request-ID middleware ----------
 class RequestIdMiddleware(BaseHTTPMiddleware):
@@ -55,6 +39,3 @@ app.include_router(ingest.router,  prefix="")
 app.include_router(parent.router,  prefix="")
 app.include_router(linking.router, prefix="")
 app.include_router(admin.router,   prefix="")
-
-
-
