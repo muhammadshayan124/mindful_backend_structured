@@ -17,7 +17,7 @@ app = FastAPI(title="Mindful Backend", version="1.0.0")
 # ALLOW_ORIGINS=http://localhost:5173,http://127.0.0.1:5173,https://preview--mindful-bridges-together.lovable.app,https://mindful-bridges-together.lovable.app
 #origins = [o.strip() for o in settings.ALLOW_ORIGINS.split(",") if o.strip()]
 
-if origins:
+#if origins:
     app.add_middleware(
         CORSMiddleware,
         allow_origins=["*"],      # exact origins only (not "*")
@@ -26,15 +26,15 @@ if origins:
         allow_headers=["*"],
         expose_headers=["X-Request-Id"],
     )
-else:
+#else:
     # Dev fallback ONLY. (OK on first boot; prefer setting ALLOW_ORIGINS.)
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origin_regex=".*",
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-        expose_headers=["X-Request-Id"],
+ #   app.add_middleware(
+  #      CORSMiddleware,
+   #     allow_origin_regex=".*",
+    #    allow_credentials=True,
+     #   allow_methods=["*"],
+      #  allow_headers=["*"],
+       # expose_headers=["X-Request-Id"],
     )
 
 # ---------- Request-ID middleware ----------
@@ -55,4 +55,5 @@ app.include_router(ingest.router,  prefix="")
 app.include_router(parent.router,  prefix="")
 app.include_router(linking.router, prefix="")
 app.include_router(admin.router,   prefix="")
+
 
